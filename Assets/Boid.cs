@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Boid : MonoBehaviour {
-    List<SteeringBehaviour> behaviours = new List<SteeringBehaviour>();
+    List<SteeringBehaviour> behaviour = new List<SteeringBehaviour>();
     
     public Vector3 force = Vector3.zero;
-    public Vector3 acceleration = Vector3.zero;
+    public Vector3 accel = Vector3.zero;
     public Vector3 velocity = Vector3.zero;
     public float mass = 1;
-    public float maxSpeed = 5.0f;   
+    public float maximumSpeed = 8.0f;   
     
     // Use this for initialization
     void Start () {
 
-        SteeringBehaviour[] behaviours = GetComponents<SteeringBehaviour>();
+        SteeringBehaviour[] behaviour = GetComponents<SteeringBehaviour>();
 
-        foreach (SteeringBehaviour b in behaviours)
+        foreach (SteeringBehaviour b in behaviour)
         {
-            this.behaviours.Add(b);
+            this.behaviour.Add(b);
         }
 	}
 
@@ -26,10 +26,9 @@ public class Boid : MonoBehaviour {
     {
         Vector3 desired = target - transform.position;
         desired.Normalize();
-        desired *= maxSpeed;
+		desired *= maximumSpeed;
         return desired - velocity;
     }
-
     public Vector3 ArriveForce(Vector3 target, float slowingDistance = 15.0f, float deceleration = 1.0f)
     {
         Vector3 toTarget = target - transform.position;
@@ -39,55 +38,49 @@ public class Boid : MonoBehaviour {
         {
             return Vector3.zero;
         }
-        float ramped = maxSpeed * (distance / (slowingDistance * deceleration));
+		float ramped = maximumSpeed * (distance / (slowingDistance * deceleration));
 
-        float clamped = Mathf.Min(ramped, maxSpeed);
+		float clamped = Mathf.Min(ramped, maximumSpeed);
         Vector3 desired = clamped * (toTarget / distance);
 
         return desired - velocity;
     }
-
-
     Vector3 Calculate()
     {
         force = Vector3.zero;
 
-        foreach (SteeringBehaviour b in behaviours)
+        foreach (SteeringBehaviour b in behaviour)
         {
             if (b.isActiveAndEnabled)
             {
                 force += b.Calculate() * b.weight;
             }
         }
-
-
         return force;
     }
-
-	
+		
 	// Update is called once per frame
 	void Update () {
         force = Calculate();
-        Vector3 newAcceleration = force / mass;
-
-        float smoothRate = Mathf.Clamp(9.0f * Time.deltaTime, 0.15f, 0.4f) / 2.0f;
-        acceleration = Vector3.Lerp(acceleration, newAcceleration, smoothRate);
+        Vector3 newAccelerate = force / mass;
+		Vector3 globalUp = new Vector3(0, 0.5f, 0);
+		Vector3 accelUp = accel * 0.1f;
+		Vector3 bankUp = accelUp + globalUp;
+        float smooth = Mathf.Clamp(6.0f * Time.deltaTime, 0.20f, 0.6f) / 2.0f;
+		accel = Vector3.Lerp(accel, newAccelerate, smooth);
         
-        velocity += acceleration * Time.deltaTime;
+		velocity += accel * Time.deltaTime;
 
-        velocity = Vector3.ClampMagnitude(velocity, maxSpeed);
+		velocity = Vector3.ClampMagnitude(velocity, maximumSpeed);
 
-        Vector3 globalUp = new Vector3(0, 0.2f, 0);
-        Vector3 accelUp = acceleration * 0.05f;
-        Vector3 bankUp = accelUp + globalUp;
-        smoothRate = Time.deltaTime * 3f;
-        Vector3 tempUp = transform.up;
-        tempUp = Vector3.Lerp(tempUp, bankUp, smoothRate);
+		smooth = Time.deltaTime * 3f;
+        Vector3 tempUpVec = transform.up;
+		tempUpVec = Vector3.Lerp(tempUpVec, bankUp, smooth);
 
         if (velocity.magnitude  > 0.0001f)
         {
-            transform.LookAt(transform.position + velocity, tempUp);
-            velocity *= 0.99f;
+			transform.LookAt(transform.position + velocity, tempUpVec);
+            velocity *= 0.9f;
         }
         transform.position += velocity * Time.deltaTime;        
 	}

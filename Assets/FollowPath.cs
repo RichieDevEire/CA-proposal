@@ -11,22 +11,17 @@ public class FollowPath : SteeringBehaviour {
 
     public void OnDrawGizmos()
     {
-        if (isActiveAndEnabled && Application.isPlaying)
+        if (isActiveAndEnabled)
         {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(transform.position, nextWaypoint);
+			Gizmos.color = Color.red;
+            Gizmos.DrawLine(this.transform.position, nextWaypoint);
         }
     }
-
-    public void Start()
-    {
-        
-    }
-
     public override Vector3 Calculate()
     {
         nextWaypoint = path.NextWaypoint();
-        if (Vector3.Distance(transform.position, nextWaypoint) < 3)
+		// Gets distance between this position and next waypoint
+		if (Vector3.Distance(this.transform.position, nextWaypoint) < 3)
         {
             path.AdvanceToNext();
         }
